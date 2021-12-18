@@ -47,20 +47,76 @@ func main() {
 			log.Fatal(err)
 		}
 
-		speeches := parseText(text)
+		speeches, date := parseText(text)
 		speeches1 := removeSpecialChars(speeches)
 		speeches1 = addBaseToWords(speeches1, &d)
 		pdf := pdf{
 			name:     file.Name(),
-			date:     "",
+			date:     date,
 			speeches: speeches1,
 		}
 
 		pdfs = append(pdfs, pdf)
 	}
-	//for _, v := range pdfs {
-	//
-	//}
+
+	politicians := set{p: map[string]int{}}
+
+	for _, pdf := range pdfs {
+		i := 1
+		for _, v := range pdf.speeches {
+			politicians.add(v.speaker, i)
+			i = i + 1
+		}
+	}
+
+	str := ""
+	for politician, id := range politicians.p {
+		str = str + insertPolitician(politician, id)
+	}
+
+	for _, v := range pdfs {
+		str = str + migrateToDatabase(v)
+	}
+}
+
+func migrateToDatabase(pdfToMigrate pdf) string {
+	str := insertDate(pdfToMigrate.date)
+	for _, v := range pdfToMigrate.speeches {
+		insertStatement(v.speaker, pdfToMigrate.date)
+		insertPoliticianWords(v.speaker, v.words, pdfToMigrate.date)
+	}
+
+	return str
+}
+
+func insertPoliticianWords(speaker string, words []word, date string) string {
+	return fmt.Sprintf("")
+}
+
+func insertPolitician(speaker string, speakerID int) string {
+	split := strings.Split(speaker, " ")
+	name := ""
+	surname := ""
+	if len(split) > 1 {
+		name = split[len(split)-2]
+		surname = split[len(split)-1]
+	} else if len(split) == 1 {
+		surname = split[0]
+	}
+
+	return fmt.Sprintf("INSERT INTO politicians (id, name, surname) VALUES(%d, %s, %s);\n", speakerID, name, surname)
+}
+
+func insertStatement(politicianId string, date string) string {
+	return fmt.Sprintf("INSERT INTO statements (politician_id, date) VALUES(%s, %s);\n", politicianId, date)
+}
+
+//func insertWord(number string, base string, variety string, statementID int) string {
+//	return fmt.Sprintf("INSERT INTO words_list (number, base, variety, statement_id) VALUES (%s, %s, %s, %s);\n", number, base, variety, statementID)
+//}
+
+func insertDate(date string) string {
+	return fmt.Sprintf("INSERT INTO political_meetings (date) VALUES(%s);\n", date)
 }
 
 type dic struct {
@@ -159,7 +215,7 @@ func getFile(path string) (string, error) {
 	return res.Body, nil
 }
 
-func parseText(pdfText string) []speech {
+func parseText(pdfText string) ([]speech, string) {
 	// nawiasy
 	bracketText := regexp.MustCompile("\\([^\\)]*\\)")
 
@@ -185,6 +241,8 @@ func parseText(pdfText string) []speech {
 		}
 	}
 
+	date := Date(split[indexesToRemove[0]])
+
 	for i := len(indexesToRemove) - 1; i >= 0; i-- {
 		split = Remove(split, indexesToRemove[i], 6)
 	}
@@ -197,6 +255,8 @@ func parseText(pdfText string) []speech {
 		}
 	}
 
+	//sprawdz czy przedostatnie slowo to imie
+
 	speeches := make([]speech, 0)
 	for i := 0; i < len(indexes)-1; i++ {
 		speech := speech{
@@ -207,7 +267,31 @@ func parseText(pdfText string) []speech {
 		speeches = append(speeches, speech)
 	}
 
-	return speeches
+	return speeches, date
+}
+
+func Date(strDate string) string {
+	split := strings.Split(strDate, " ")
+	day := split[len(split)-4]
+	month := split[len(split)-3]
+	year := split[len(split)-2]
+
+	months := map[string]string{
+		"stycznia":     "01",
+		"lutego":       "02",
+		"marca":        "03",
+		"kwietnia":     "04",
+		"maja":         "05",
+		"czerwca":      "06",
+		"lipca":        "07",
+		"sierpnia":     "08",
+		"września":     "09",
+		"października": "10",
+		"listopada":    "11",
+		"grudnia":      "12",
+	}
+
+	return fmt.Sprintf("%s-%s-%s", year, months[month], day)
 }
 
 func Remove(s []string, index, numberOfLines int) []string {
@@ -229,3 +313,13 @@ func RemoveWord(w []word, index int) []word {
 //	}
 //	return list
 //}
+
+type set struct {
+	p map[string]int
+}
+
+func (s *set) add(politician string, id int) {
+	if _, ok := s.p[politician]; !ok {
+		s.p[politician] = id
+	}
+}
