@@ -41,14 +41,20 @@ func main() {
 
 	pdfs := make([]pdf, 0)
 	d := createMap("/home/tomek/Pulpit/odm.txt")
+	specialChars := dic{m: map[string]string{}}
+	i := 1.0
 	for _, file := range files {
+		progress := i / 623 * 100
+		fmt.Printf("%g ", progress)
+		i = i + 1
+		fmt.Println(file.Name())
 		text, err := getFile(pathToFiles + file.Name())
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		speeches, date := parseText(text)
-		speeches1 := removeSpecialChars(speeches)
+		speeches1 := removeSpecialChars(speeches, &specialChars)
 		speeches1 = addBaseToWords(speeches1, &d)
 		pdf := pdf{
 			name:     file.Name(),
@@ -58,6 +64,8 @@ func main() {
 
 		pdfs = append(pdfs, pdf)
 	}
+
+	fmt.Println(specialChars)
 
 	politicians := set{p: map[string]int{}}
 
@@ -168,13 +176,25 @@ func addBaseToWords(speeches []speechWords, d *dic) []speechWords {
 	return speeches
 }
 
-func removeSpecialChars(speeches []speech) []speechWords {
+func removeSpecialChars(speeches []speech, d *dic) []speechWords {
 	speeches1 := make([]speechWords, 0)
-	specialChars := regexp.MustCompile("[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜßﬁ]")
+
+	specialChars := regexp.MustCompile("[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜéÀ]")
+	toReplace := map[string]string{"ﬁ": "fi", "ﬂ": "fl"}
+
 	for _, v := range speeches {
 		lines := strings.ReplaceAll(v.lines, " - ", " ")
 		lines = strings.ReplaceAll(lines, "-", "")
-		fmt.Println(specialChars.FindString(lines)) //todo: find all removed words
+
+		for k, v := range toReplace {
+			lines = strings.ReplaceAll(lines, k, v)
+		}
+
+		badChars := specialChars.FindAllString(lines, -1) //todo: find all removed words
+		for _, v := range badChars {
+			d.add(v, "")
+		}
+
 		lines = specialChars.ReplaceAllString(lines, " ")
 
 		v.speaker = strings.ReplaceAll(v.speaker, ":", "")
@@ -220,7 +240,7 @@ func parseText(pdfText string) ([]speech, string) {
 	bracketText := regexp.MustCompile("\\([^\\)]*\\)")
 
 	// nagłówki stron
-	pageHeaderText := regexp.MustCompile("[0-9][0-9]. posiedzenie Sejmu w dniu")
+	pageHeaderText := regexp.MustCompile("[0-9]?[0-9]. posiedzenie Sejmu w dniu")
 
 	// usuniecie tekstu w nawiasach
 	text := strings.ReplaceAll(pdfText, "\n", "!~")
@@ -235,7 +255,7 @@ func parseText(pdfText string) ([]speech, string) {
 
 	// usuniecie naglowkow stron
 	indexesToRemove := make([]int, 0)
-	for i, v := range split { //todo wydobyć date posiedzenia z nagłówka
+	for i, v := range split {
 		if pageHeaderText.Match([]byte(v)) {
 			indexesToRemove = append(indexesToRemove, i)
 		}
@@ -256,7 +276,6 @@ func parseText(pdfText string) ([]speech, string) {
 	}
 
 	//sprawdz czy przedostatnie slowo to imie
-
 	speeches := make([]speech, 0)
 	for i := 0; i < len(indexes)-1; i++ {
 		speech := speech{
@@ -295,6 +314,9 @@ func Date(strDate string) string {
 }
 
 func Remove(s []string, index, numberOfLines int) []string {
+	if index+numberOfLines > len(s) {
+		return s[:index]
+	}
 	return append(s[:index], s[index+numberOfLines:]...)
 }
 
@@ -323,3 +345,21 @@ func (s *set) add(politician string, id int) {
 		s.p[politician] = id
 	}
 }
+
+//func polishNames(path string) dic {
+//	d := dic{
+//		m: make(map[string]string, 0),
+//	}
+//
+//	f, _ := os.Open(path)
+//	defer f.Close()
+//
+//	// Splits on newlines by default.
+//	s := bufio.NewScanner(f)
+//
+//	for s.Scan() {
+//		d
+//	}
+//
+//	return d
+//}
