@@ -178,18 +178,18 @@ func addBaseToWords(speeches []speechWords, d *dic) []speechWords {
 
 func removeSpecialChars(speeches []speech, d *dic) []speechWords {
 	speeches1 := make([]speechWords, 0)
-
-	specialChars := regexp.MustCompile("[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜéÀµÁÇÉ×àáãåçèêëíîñòôõøùúýăČčėěğįıōőřŞşŠšūůųŽžμЗПабвгдежзийклмнопрстухцчшщьяєії]")
-	toReplace := map[string]string{"ﬁ": "fi", "ﬂ": "fl"}
+	badCharsRegex := "[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜéÀµÁÇÉ×àáãåçèêëíîñòôõøùúýăČčėěğįıōőřŞşŠšūůųŽžμЗПабвгдежзийклмнопрстухцчшщьяєії]"
+	specialChars := regexp.MustCompile(badCharsRegex)
+	toReplace := map[string]string{"ﬁ": "fi", "ﬂ": "fl", "‑": "-", "–": "-", "—": "-", "−": "-", "\u00AD": "-"}
 	for _, v := range speeches {
-		lines := strings.ReplaceAll(v.lines, " - ", " ")
-		lines = strings.ReplaceAll(lines, "-", "")
-
+		lines := v.lines
 		for k, v := range toReplace {
 			lines = strings.ReplaceAll(lines, k, v)
 		}
+		lines = strings.ReplaceAll(v.lines, " - ", " ")
+		lines = strings.ReplaceAll(lines, "-", "")
 
-		badChars := specialChars.FindAllString(lines, -1) //todo: find all removed words
+		badChars := specialChars.FindAllString(lines, -1)
 		for _, v := range badChars {
 			d.add(v, "")
 		}
