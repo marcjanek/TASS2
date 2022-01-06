@@ -33,11 +33,13 @@ type pdf struct {
 }
 
 func main() {
-	pathToFiles := "data/"
+	pathToFiles := "data1/"
 	files, err := ioutil.ReadDir(pathToFiles)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	names := polishNames("./imiona.txt")
 
 	pdfs := make([]pdf, 0)
 	d := createMap("odm.txt")
@@ -53,7 +55,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		speeches, date := parseText(text)
+		speeches, date := parseText(text, names)
 		speeches1 := removeSpecialChars(speeches, &specialChars)
 		speeches1 = addBaseToWords(speeches1, &d)
 		pdf := pdf{
@@ -77,54 +79,62 @@ func main() {
 		}
 	}
 
-	str := ""
 	for politician, id := range politicians.p {
-		str = str + insertPolitician(politician, id)
+		appendToFile(insertPolitician(politician, id))
 	}
 
+	statementID := 1
+
 	for _, v := range pdfs {
-		str = str + migrateToDatabase(v)
+		appendToFile(migrateToDatabase(v, &statementID))
 	}
 }
 
-func migrateToDatabase(pdfToMigrate pdf) string {
+func migrateToDatabase(pdfToMigrate pdf, statementID *int) string {
 	str := insertDate(pdfToMigrate.date)
 	for _, v := range pdfToMigrate.speeches {
-		insertStatement(v.speaker, pdfToMigrate.date)
-		insertPoliticianWords(v.speaker, v.words, pdfToMigrate.date)
+		str += insertStatement(*statementID, v.speaker, pdfToMigrate.date)
+		str += insertPoliticianWords(*statementID, v.words)
+		*statementID += 1
 	}
 
 	return str
 }
 
-func insertPoliticianWords(speaker string, words []word, date string) string {
-	return fmt.Sprintf("")
+func appendToFile(text string) {
+	f, err := os.OpenFile("sql.txt",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(text); err != nil {
+		log.Println(err)
+	}
+}
+
+func insertPoliticianWords(statementID int, words []word) string {
+	str := "INSERT INTO words_list (number, base, variety, statement_id) VALUES "
+	for k, v := range words {
+		str += insertWord(k, v.base, v.variety, statementID)
+	}
+	return str + "\n"
 }
 
 func insertPolitician(speaker string, speakerID int) string {
-	split := strings.Split(speaker, " ")
-	name := ""
-	surname := ""
-	if len(split) > 1 {
-		name = split[len(split)-2]
-		surname = split[len(split)-1]
-	} else if len(split) == 1 {
-		surname = split[0]
-	}
-
-	return fmt.Sprintf("INSERT INTO politicians (id, name, surname) VALUES(%d, %s, %s);\n", speakerID, name, surname)
+	return fmt.Sprintf("INSERT INTO politicians (id, name) VALUES(%d, '%s');\n", speakerID, speaker)
 }
 
-func insertStatement(politicianId string, date string) string {
-	return fmt.Sprintf("INSERT INTO statements (politician_id, date) VALUES(%s, %s);\n", politicianId, date)
+func insertStatement(id int, politicianId string, date string) string {
+	return fmt.Sprintf("INSERT INTO statements (id, politician_id, date) VALUES(%d, '%s', '%s');\n", id, politicianId, date)
 }
 
-//func insertWord(number string, base string, variety string, statementID int) string {
-//	return fmt.Sprintf("INSERT INTO words_list (number, base, variety, statement_id) VALUES (%s, %s, %s, %s);\n", number, base, variety, statementID)
-//}
+func insertWord(number int, base string, variety string, statementID int) string {
+	return fmt.Sprintf("(%d, '%s', '%s', %d) ", number, base, variety, statementID)
+}
 
 func insertDate(date string) string {
-	return fmt.Sprintf("INSERT INTO political_meetings (date) VALUES(%s);\n", date)
+	return fmt.Sprintf("INSERT INTO political_meetings (date) VALUES('%s');\n", date)
 }
 
 type dic struct {
@@ -186,7 +196,7 @@ func removeSpecialChars(speeches []speech, d *dic) []speechWords {
 		for k, v := range toReplace {
 			lines = strings.ReplaceAll(lines, k, v)
 		}
-		lines = strings.ReplaceAll(v.lines, " - ", " ")
+		lines = strings.ReplaceAll(lines, " - ", " ")
 		lines = strings.ReplaceAll(lines, "-", "")
 
 		badChars := specialChars.FindAllString(lines, -1)
@@ -234,7 +244,7 @@ func getFile(path string) (string, error) {
 	return res.Body, nil
 }
 
-func parseText(pdfText string) ([]speech, string) {
+func parseText(pdfText string, names dic) ([]speech, string) {
 	// nawiasy
 	bracketText := regexp.MustCompile("\\([^\\)]*\\)")
 
@@ -275,10 +285,37 @@ func parseText(pdfText string) ([]speech, string) {
 	}
 
 	//sprawdz czy przedostatnie slowo to imie
+	for i := len(indexes) - 1; i >= 0; i-- {
+		speaker := strings.Split(split[indexes[i]], " ")
+		if len(speaker) < 2 {
+			if speaker[0] != "Marszałek:" {
+				indexes = append(indexes[:i], indexes[i+1:]...)
+			}
+
+			continue
+		}
+
+		name := speaker[len(speaker)-2]
+		if names.find(name) != "" {
+			indexes = append(indexes[:i], indexes[i+1:]...)
+		}
+	}
+
 	speeches := make([]speech, 0)
 	for i := 0; i < len(indexes)-1; i++ {
+		speaker := strings.Split(split[indexes[i]][:len(split[indexes[i]])-1], " ")
+		if len(speaker) < 2 {
+			speech := speech{
+				speaker: strings.Join(speaker, " "),
+				lines:   strings.Join(split[indexes[i]+1:indexes[i+1]], " "),
+			}
+
+			speeches = append(speeches, speech)
+			continue
+		}
+
 		speech := speech{
-			speaker: split[indexes[i]],
+			speaker: strings.Join(speaker[len(speaker)-2:], " "),
 			lines:   strings.Join(split[indexes[i]+1:indexes[i+1]], " "),
 		}
 
@@ -323,18 +360,6 @@ func RemoveWord(w []word, index int) []word {
 	return append(w[:index], w[index+1:]...)
 }
 
-//func removeDuplicateStr(strSlice []string) []string {
-//	allKeys := make(map[string]bool)
-//	list := []string{}
-//	for _, item := range strSlice {
-//		if _, value := allKeys[item]; !value {
-//			allKeys[item] = true
-//			list = append(list, item)
-//		}
-//	}
-//	return list
-//}
-
 type set struct {
 	p map[string]int
 }
@@ -345,20 +370,19 @@ func (s *set) add(politician string, id int) {
 	}
 }
 
-//func polishNames(path string) dic {
-//	d := dic{
-//		m: make(map[string]string, 0),
-//	}
-//
-//	f, _ := os.Open(path)
-//	defer f.Close()
-//
-//	// Splits on newlines by default.
-//	s := bufio.NewScanner(f)
-//
-//	for s.Scan() {
-//		d
-//	}
-//
-//	return d
-//}
+func polishNames(path string) dic {
+	d := dic{
+		m: make(map[string]string, 0),
+	}
+
+	f, _ := os.Open(path)
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+
+	for s.Scan() {
+		d.add(s.Text(), "")
+	}
+
+	return d
+}
