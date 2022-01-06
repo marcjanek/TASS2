@@ -33,14 +33,14 @@ type pdf struct {
 }
 
 func main() {
-	pathToFiles := "/home/tomek/Pulpit/pdfs/"
+	pathToFiles := "data/"
 	files, err := ioutil.ReadDir(pathToFiles)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	pdfs := make([]pdf, 0)
-	d := createMap("/home/tomek/Pulpit/odm.txt")
+	d := createMap("odm.txt")
 	specialChars := dic{m: map[string]string{}}
 	i := 1.0
 	for _, file := range files {
@@ -179,9 +179,8 @@ func addBaseToWords(speeches []speechWords, d *dic) []speechWords {
 func removeSpecialChars(speeches []speech, d *dic) []speechWords {
 	speeches1 := make([]speechWords, 0)
 
-	specialChars := regexp.MustCompile("[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜéÀ]")
+	specialChars := regexp.MustCompile("[^A-Za-z0-9ąęóśćżźńłĄĘÓŚĆŻŹŃŁäÄöÖüÜéÀµÁÇÉ×àáãåçèêëíîñòôõøùúýăČčėěğįıōőřŞşŠšūůųŽžμЗПабвгдежзийклмнопрстухцчшщьяєії]")
 	toReplace := map[string]string{"ﬁ": "fi", "ﬂ": "fl"}
-
 	for _, v := range speeches {
 		lines := strings.ReplaceAll(v.lines, " - ", " ")
 		lines = strings.ReplaceAll(lines, "-", "")
