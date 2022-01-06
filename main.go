@@ -86,14 +86,14 @@ func main() {
 	statementID := 1
 
 	for _, v := range pdfs {
-		appendToFile(migrateToDatabase(v, &statementID))
+		appendToFile(migrateToDatabase(v, &statementID, politicians))
 	}
 }
 
-func migrateToDatabase(pdfToMigrate pdf, statementID *int) string {
+func migrateToDatabase(pdfToMigrate pdf, statementID *int, politicians set) string {
 	str := insertDate(pdfToMigrate.date)
 	for _, v := range pdfToMigrate.speeches {
-		str += insertStatement(*statementID, v.speaker, pdfToMigrate.date)
+		str += insertStatement(*statementID, politicians.p[v.speaker], pdfToMigrate.date)
 		str += insertPoliticianWords(*statementID, v.words)
 		*statementID += 1
 	}
@@ -118,19 +118,19 @@ func insertPoliticianWords(statementID int, words []word) string {
 	for k, v := range words {
 		str += insertWord(k, v.base, v.variety, statementID)
 	}
-	return str + "\n"
+	return str[:len(str)-2] + ";\n"
 }
 
 func insertPolitician(speaker string, speakerID int) string {
 	return fmt.Sprintf("INSERT INTO politicians (id, name) VALUES(%d, '%s');\n", speakerID, speaker)
 }
 
-func insertStatement(id int, politicianId string, date string) string {
-	return fmt.Sprintf("INSERT INTO statements (id, politician_id, date) VALUES(%d, '%s', '%s');\n", id, politicianId, date)
+func insertStatement(id int, politicianId int, date string) string {
+	return fmt.Sprintf("INSERT INTO statements (id, politician_id, date) VALUES(%d, %d, '%s');\n", id, politicianId, date)
 }
 
 func insertWord(number int, base string, variety string, statementID int) string {
-	return fmt.Sprintf("(%d, '%s', '%s', %d) ", number, base, variety, statementID)
+	return fmt.Sprintf("(%d, '%s', '%s', %d), ", number, base, variety, statementID)
 }
 
 func insertDate(date string) string {
