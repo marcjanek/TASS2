@@ -71,11 +71,11 @@ func main() {
 
 	politicians := set{p: map[string]int{}}
 
+	j := 1
 	for _, pdf := range pdfs {
-		i := 1
 		for _, v := range pdf.speeches {
-			politicians.add(v.speaker, i)
-			i = i + 1
+			politicians.add(v.speaker, j)
+			j = j + 1
 		}
 	}
 
