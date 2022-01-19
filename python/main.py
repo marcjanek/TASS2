@@ -1,11 +1,11 @@
+import json
 import os
+from os.path import isfile
 
+import matplotlib.pyplot as plt
+import networkx
 import networkx as nx
 from networkx.algorithms import bipartite
-import matplotlib.pyplot as plt
-from os import listdir
-from os.path import isfile, join
-import pyodbc
 
 party_id = {
 	'Kukiz\'15': 'black',
@@ -74,23 +74,31 @@ class Friends:
 		for file in os.listdir('./results/' + date + '/' + interval + '/' + friends):
 			if isfile('./results/' + date + '/' + interval + '/' + friends + '/' + file) and file[-3:] == 'csv':
 				self.files[file] = Graph(date, interval, friends, file)
+			elif isfile('./results/' + date + '/' + interval + '/' + friends + '/' + file):
+				os.remove('./results/' + date + '/' + interval + '/' + friends + '/' + file)
 
 	def draw_all(self):
+		self.difference_a_minus_b()
+		self.difference_b_minus_a()
+		self.intersection_graph()
 		for i in self.files:
-			if self.files[i].with_friends == 'with_friends':
-				self.files[i].draw_circular()
-				self.files[i].draw_bipartite()
-			else:
-				self.files[i].draw_circular()
-				self.files[i].draw_bipartite()
+			self.files[i].draw_circular()
+			self.files[i].draw_bipartite()
+			self.files[i].betweenness_centrality()
+			self.files[i].clustering_coefficient()
+			self.files[i].clustering_coefficient_projected()
+			print('Modularity, dat: ' + self.files[i].date + ' z interwałem: ' + self.files[i].interval + ' ' +
+			      self.files[i].with_friends +
+			      ' dla pliku: ' + self.files[i].file +
+			      ' wynosi:' + str(self.files[i].modularity()))
 
 	def difference_a_minus_b(self):
 		g_a = self.files['after.csv'].g
 		g_b = self.files['before.csv'].g
 		return self._difference(g_a,
 		                        g_b,
-		                        './results/' + self.date + '/' + self.interval + '/' + self.friends + '/difference_b_minus_a',
-		                        'TODO'
+		                        './results/' + self.date + '/' + self.interval + '/' + self.friends + '/difference_a_minus_b',
+		                        'a-b'
 		                        )
 
 	def difference_b_minus_a(self):
@@ -99,7 +107,7 @@ class Friends:
 		return self._difference(g_b,
 		                        g_a,
 		                        './results/' + self.date + '/' + self.interval + '/' + self.friends + '/difference_b_minus_a',
-		                        'TODO'
+		                        'b-a'
 		                        )
 
 	def _difference(self, g, h, out_file, title):
@@ -117,48 +125,16 @@ class Friends:
 		g_new.remove_nodes_from(n for n in g if n not in h)
 		g_new.remove_edges_from(e for e in g.edges if e not in h.edges)
 
+		g_new = g_new.subgraph(sorted(nx.connected_components(g_new), key=len, reverse=True)[0])
 		x, y = bipartite.sets(g_new)
 
-		for u,v,d in g_new.edges(data=True):
-			d['weight'] = g[u][v]["weight"]-h[u][v]["weight"]
+		for u, v, d in g_new.edges(data=True):
+			d['weight'] = g[u][v]["weight"] - h[u][v]["weight"]
 
 		self.files['after.csv'].draw(g_new, nx.bipartite_layout(g_new, x),
 		                             './results/' + self.date + '/' + self.interval + '/' + self.friends + '/intersection',
-		                             'TODO')
+		                             'Zmiana w liczbie wypowiedzianych słów, data: ' + self.date)
 		return g_new
-
-	def count_words(self):
-		g = self.files['after.csv'].g
-		h = self.files['before.csv'].g
-
-		y_a = {}
-		x, y = bipartite.sets(g)
-
-		for u in y:
-			sum = 0
-			for e in g.edges(u):
-				sum += g[e[0]][e[1]]["weight"]
-			y_a[u] = sum
-
-		y_b = {}
-		x, y = bipartite.sets(h)
-
-		for u in y:
-			sum = 0
-			for e in h.edges(u):
-				sum += h[e[0]][e[1]]["weight"]
-			y_b[u] = sum
-
-		words = {}
-		for k in y_b:
-			words[k] = [y_b[k], 0]
-
-		for k in y_a:
-			if k in words:
-				words[k] = [y_b[k], y_a[k]]
-			else:
-				words[k] = [0, y_a[k]]
-		return words
 
 
 class Graph:
@@ -169,7 +145,7 @@ class Graph:
 		self.file = file
 
 		self.g = self.new_graph()
-
+		self.g = self.g.subgraph(sorted(nx.connected_components(self.g), key=len, reverse=True)[0])
 		self.x, self.y = bipartite.sets(self.g)
 		self.g_x = bipartite.weighted_projected_graph(self.g, nodes=list(self.x), ratio=False)
 		self.g_y = bipartite.weighted_projected_graph(self.g, nodes=list(self.y), ratio=False)
@@ -206,29 +182,29 @@ class Graph:
 		nx.draw_networkx_nodes(g, pos, nodelist=nodes, node_color=colors)
 		nx.draw_networkx_labels(g, pos)
 		nx.draw_networkx_edges(g, pos)
-
-		nx.draw_networkx_edge_labels(g, pos, edge_labels=self.get_edge_attributes('weight', g))
+		if len(g.nodes) < 30:
+			nx.draw_networkx_edge_labels(g, pos, edge_labels=self._get_edge_attributes('weight', g))
 		plt.title(title)
 		plt.savefig(out_path)
-		plt.show()
+		plt.clf()
+
+		# plt.show()
 
 	def draw_circular(self):
 		self.draw(self.g_x,
 		          nx.circular_layout(self.g_x),
-		          './results/' + self.date + '/' + self.interval + '/' + self.with_friends + '/' + self.file[
-		                                                                                           :-4] + '_circular',
-		          'Graf przedstawiający politków ' + self.title()
+		          self.out_path() + '_circular',
+		          'Sieć politków ' + self.title()
 		          )
 
 	def draw_bipartite(self):
 		self.draw(self.g,
 		          nx.bipartite_layout(self.g, self.x),
-		          './results/' + self.date + '/' + self.interval + '/' + self.with_friends + '/' + self.file[
-		                                                                                           :-4] + '_bipartite',
-		          'Graf dwudzielny przedstawiający polityków ' + self.title()
+		          self.out_path() + '_bipartite',
+		          'Sieć dwudzielna polityków ' + self.title()
 		          )
 
-	def get_edge_attributes(self, name, g):
+	def _get_edge_attributes(self, name, g):
 		e = g.edges(data=True)
 		return dict((x[:-1], x[-1][name]) for x in e if name in x[-1])
 
@@ -245,19 +221,106 @@ class Graph:
 		else:
 			str += 'bez kolegów partyjych '
 
-		str += ', gdzie '
-		str += 'środek bufora to ' + self.date + ', a jego promień wynosi ' + self.interval + 'dni.'
+		str += 'data: ' + self.date + ', promień bufora: ' + self.interval + 'dni.'
 
 		return str
 
+	def betweenness_centrality(self):
+		g_new = self.g.copy()
+
+		betweenness = bipartite.betweenness_centrality(g_new, list(self.x))
+		nx.set_node_attributes(g_new, betweenness, 'betweenness')
+
+		self.save_to_file('betweenness',
+		                  json.dumps(dict(sorted(betweenness.items(), key=lambda item: item[1])), indent=6))
+
+		self.draw1(g_new,
+		           nx.bipartite_layout(g_new, self.x),
+		           self.out_path() + '_betweenness_centrality',
+		           'betweenness centrality',
+		           'betweenness'
+		           )
+
+	def clustering_coefficient(self):
+		g_new = self.g.copy()
+
+		clustering = bipartite.clustering(g_new)
+		nx.set_node_attributes(g_new, clustering, 'clustering_coefficient')
+
+		self.save_to_file('clustering_coefficient',
+		                  json.dumps(dict(sorted(clustering.items(), key=lambda item: item[1])), indent=6))
+
+		self.draw1(g_new,
+		           nx.bipartite_layout(g_new, self.x),
+		           self.out_path() + '_clustering_coefficient',
+		           'clustering coefficient przed zmianami partyjnymi,' + ' data: ' + self.date + ', promień bufora: ' + self.interval + 'dni.',
+		           'clustering_coefficient'
+		           )
+
+	def clustering_coefficient_projected(self):
+		g_new = self.g_x.copy()
+
+		clustering = nx.clustering(g_new, weight='weight')
+		nx.set_node_attributes(g_new, clustering, 'clustering_coefficient_projected')
+
+		self.draw1(g_new,
+		           nx.circular_layout(g_new),
+		           self.out_path() + '_clustering_coefficient_projected',
+		           'clustering coefficient po zmianach partyjnych,' + ' data: ' + self.date + ', promień bufora: ' + self.interval + 'dni.',
+		           'clustering_coefficient_projected'
+		           )
+
+	def modularity(self):
+		g_new = self.g_x.copy()
+
+		party_people = {}
+
+		for node in g_new.nodes():
+			c = g_new.nodes[node]['Party']
+			if c not in party_people:
+				party_people[c] = [node]
+			else:
+				party_people[c].append(node)
+
+		return networkx.algorithms.community.quality.modularity(g_new, communities=list(party_people.values()),
+		                                                        weight='weight')
+
+	def draw1(self, g, pos, out_path, title, attribute):
+		nodes = g.nodes()
+		colors = [nodes[n][attribute] for n in nodes]
+
+		plt.figure(3, figsize=(15, 15))
+
+		nc = nx.draw_networkx_nodes(g, pos, nodelist=nodes, node_color=colors, vmin=min(colors), vmax=max(colors))
+		nx.draw_networkx_labels(g, pos)
+		nx.draw_networkx_edges(g, pos)
+		if len(g.nodes) < 30:
+			nx.draw_networkx_edge_labels(g, pos, edge_labels=self._get_edge_attributes('weight', g))
+		plt.title(title)
+
+		cb = plt.colorbar(nc)
+		plt.axis('off')
+
+		plt.savefig(out_path)
+		plt.clf()
+		# plt.show()
+
+	def out_path(self):
+		return './results/' + self.date + '/' + self.interval + '/' + self.with_friends + '/' + self.file[:-4]
+
+	def save_to_file(self, suffix, txt):
+		f = open(self.out_path() + '_' + suffix + '.txt', 'w')
+		f.write(txt)
+		f.close()
+
 
 d = Data()
+d.draw_all()
 
-# d.draw_all()
-# d.dates['2021-01-17'].intervals['47'].friends['without_friends'].difference_b_minus_a()
-# d.dates['2021-01-17'].intervals['47'].friends['without_friends'].difference_a_minus_b()
-d.dates['2021-01-17'].intervals['47'].friends['without_friends'].intersection_graph()
-print(d.dates['2021-01-17'].intervals['47'].friends['without_friends'].count_words())
+# d.dates['2020-12-09'].draw_all()
+
+# print(d.dates['2021-01-17'].intervals['47'].friends['without_friends'].files['after.csv'].modularity())
+# print(d.dates['2021-01-17'].intervals['47'].friends['without_friends'].count_words())
 
 # gr = d.get_graph('2018-12-05', '47', 'without_friends', 'after.csv')
 # gr.draw_circular()
@@ -347,4 +410,24 @@ from (select p.id, party as party, name
 group by p.name, cw.base, p.party;'''
 
 
-print(create_sql('2021-01-17', 47))
+print(create_sql('2020-12-09', 200))
+# Modularity, dat: 2021-01-17 z interwałem: 47 without_friends dla pliku: before.csv wynosi:-0.0619253650621958
+# Modularity, dat: 2021-01-17 z interwałem: 47 without_friends dla pliku: after.csv wynosi:-0.15000000000000002
+# Modularity, dat: 2021-01-17 z interwałem: 47 with_friends dla pliku: before.csv wynosi:-0.003251178851068709
+# Modularity, dat: 2021-01-17 z interwałem: 47 with_friends dla pliku: after.csv wynosi:-0.03287353722652497
+# Modularity, dat: 2017-10-11 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.09833795013850413
+# Modularity, dat: 2017-10-11 z interwałem: 100 without_friends dla pliku: after.csv wynosi:-0.06521114622234991
+# Modularity, dat: 2017-10-11 z interwałem: 100 with_friends dla pliku: before.csv wynosi:-0.0009154099047128195
+# Modularity, dat: 2017-10-11 z interwałem: 100 with_friends dla pliku: after.csv wynosi:-0.001066757184970959
+# Modularity, dat: 2017-10-11 z interwałem: 200 without_friends dla pliku: before.csv wynosi:-0.044927679158448405
+# Modularity, dat: 2017-10-11 z interwałem: 200 without_friends dla pliku: after.csv wynosi:-0.061423153871420486
+# Modularity, dat: 2017-10-11 z interwałem: 200 with_friends dla pliku: before.csv wynosi:0.00010467127271685217
+# Modularity, dat: 2017-10-11 z interwałem: 200 with_friends dla pliku: after.csv wynosi:-0.0012009369252255074
+# Modularity, dat: 2020-12-09 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.08210526315789472
+# Modularity, dat: 2020-12-09 z interwałem: 100 without_friends dla pliku: after.csv wynosi:-0.12521701388888887
+# Modularity, dat: 2020-12-09 z interwałem: 100 with_friends dla pliku: before.csv wynosi:0.0019442674593612404
+# Modularity, dat: 2020-12-09 z interwałem: 100 with_friends dla pliku: after.csv wynosi:-0.052129734765772845
+# Modularity, dat: 2020-12-09 z interwałem: 200 without_friends dla pliku: before.csv wynosi:-0.05660595702255693
+# Modularity, dat: 2020-12-09 z interwałem: 200 without_friends dla pliku: after.csv wynosi:-0.06267561983471077
+# Modularity, dat: 2020-12-09 z interwałem: 200 with_friends dla pliku: before.csv wynosi:0.0001850091990816217
+# Modularity, dat: 2020-12-09 z interwałem: 200 with_friends dla pliku: after.csv wynosi:-0.018350971393228842

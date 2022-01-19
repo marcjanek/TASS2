@@ -1,0 +1,14 @@
+{
+      "Pawe\u0142 Szramka": 0.37142857142857144,
+      "Stanis\u0142aw \u017buk": 0.37142857142857144,
+      "Jaros\u0142aw Sachajko": 0.7142857142857143,
+      "Paulina Hennig-Kloska": 0.7142857142857143,
+      "Tomasz Zimoch": 0.7142857142857143,
+      "polski": 0.7333333333333333,
+      "konstytucja": 0.75,
+      "polak": 0.75,
+      "trybuna\u0142": 0.75,
+      "unia": 0.75,
+      "kobieta": 0.7666666666666666,
+      "s\u0105d": 0.7666666666666666
+}

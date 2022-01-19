@@ -1,0 +1,18 @@
+{
+      "konstytucja": 0.1111111111111111,
+      "trybuna\u0142": 0.15555555555555556,
+      "praworz\u0105dno\u015b\u0107": 0.15555555555555556,
+      "Zbigniew Gryglas": 0.29375,
+      "polski": 0.29629629629629634,
+      "Piotr Liroy-Marzec": 0.35208333333333336,
+      "Ma\u0142gorzata Janowska": 0.3520833333333334,
+      "Adam Cyra\u0144ski": 0.40625,
+      "Maria Siarkowska": 0.40625,
+      "polak": 0.5055555555555555,
+      "unia": 0.5055555555555555,
+      "s\u0105d": 0.5111111111111111,
+      "Adam Andruszkiewicz": 0.5208333333333334,
+      "Jaros\u0142aw Porwich": 0.53125,
+      "\u0141ukasz Rzepecki": 0.53125,
+      "Sylwester Chruszcz": 0.53125
+}

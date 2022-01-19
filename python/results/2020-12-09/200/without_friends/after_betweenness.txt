@@ -1,0 +1,23 @@
+{
+      "praworz\u0105dno\u015b\u0107": 0.0,
+      "Zbigniew Girzy\u0144ski": 0.0,
+      "Ireneusz Ra\u015b": 0.0015972533213912522,
+      "Stanis\u0142aw \u017buk": 0.0015972533213912522,
+      "Monika Paw\u0142owska": 0.005899305037236072,
+      "Pawe\u0142 Szramka": 0.010613651992962336,
+      "Wojciech Maksymowicz": 0.013823595742833492,
+      "kobieta": 0.02362468031866939,
+      "Agnieszka \u015acigaj": 0.026544261720899805,
+      "trybuna\u0142": 0.027456970306037574,
+      "konstytucja": 0.027562840034575473,
+      "Pawe\u0142 Zalewski": 0.032780352711981715,
+      "Hanna Gill-Pi\u0105tek": 0.03944605335597679,
+      "Paulina Hennig-Kloska": 0.03944605335597679,
+      "s\u0105d": 0.04206391011789542,
+      "Tomasz Zimoch": 0.04801453124160532,
+      "Jaros\u0142aw Sachajko": 0.06287633604359204,
+      "polak": 0.09732148488582394,
+      "unia": 0.14263640069254305,
+      "Miros\u0142aw Sucho\u0144": 0.15414296134955544,
+      "polski": 0.3278583038083896
+}
