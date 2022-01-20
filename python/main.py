@@ -410,24 +410,28 @@ from (select p.id, party as party, name
 group by p.name, cw.base, p.party;'''
 
 
-print(create_sql('2020-12-09', 200))
+print(create_sql('2017-08-15', 130))
+# Modularity, dat: 2017-08-15 z interwałem: 130 without_friends dla pliku: before.csv wynosi:-0.06423365264473134
+# Modularity, dat: 2017-08-15 z interwałem: 130 without_friends dla pliku: after.csv wynosi:-0.0658972050754458
+# Modularity, dat: 2017-08-15 z interwałem: 130 with_friends dla pliku: before.csv wynosi:0.00045642750486955456
+# Modularity, dat: 2017-08-15 z interwałem: 130 with_friends dla pliku: after.csv wynosi:-0.0013217708612856178
 # Modularity, dat: 2021-01-17 z interwałem: 47 without_friends dla pliku: before.csv wynosi:-0.0619253650621958
 # Modularity, dat: 2021-01-17 z interwałem: 47 without_friends dla pliku: after.csv wynosi:-0.15000000000000002
 # Modularity, dat: 2021-01-17 z interwałem: 47 with_friends dla pliku: before.csv wynosi:-0.003251178851068709
 # Modularity, dat: 2021-01-17 z interwałem: 47 with_friends dla pliku: after.csv wynosi:-0.03287353722652497
-# Modularity, dat: 2017-10-11 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.09833795013850413
+# Modularity, dat: 2017-10-11 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.09833795013850412
 # Modularity, dat: 2017-10-11 z interwałem: 100 without_friends dla pliku: after.csv wynosi:-0.06521114622234991
-# Modularity, dat: 2017-10-11 z interwałem: 100 with_friends dla pliku: before.csv wynosi:-0.0009154099047128195
+# Modularity, dat: 2017-10-11 z interwałem: 100 with_friends dla pliku: before.csv wynosi:-0.0009154099047128196
 # Modularity, dat: 2017-10-11 z interwałem: 100 with_friends dla pliku: after.csv wynosi:-0.001066757184970959
-# Modularity, dat: 2017-10-11 z interwałem: 200 without_friends dla pliku: before.csv wynosi:-0.044927679158448405
+# Modularity, dat: 2017-10-11 z interwałem: 200 without_friends dla pliku: before.csv wynosi:-0.0449276791584484
 # Modularity, dat: 2017-10-11 z interwałem: 200 without_friends dla pliku: after.csv wynosi:-0.061423153871420486
 # Modularity, dat: 2017-10-11 z interwałem: 200 with_friends dla pliku: before.csv wynosi:0.00010467127271685217
 # Modularity, dat: 2017-10-11 z interwałem: 200 with_friends dla pliku: after.csv wynosi:-0.0012009369252255074
-# Modularity, dat: 2020-12-09 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.08210526315789472
+# Modularity, dat: 2020-12-09 z interwałem: 100 without_friends dla pliku: before.csv wynosi:-0.08210526315789471
 # Modularity, dat: 2020-12-09 z interwałem: 100 without_friends dla pliku: after.csv wynosi:-0.12521701388888887
 # Modularity, dat: 2020-12-09 z interwałem: 100 with_friends dla pliku: before.csv wynosi:0.0019442674593612404
 # Modularity, dat: 2020-12-09 z interwałem: 100 with_friends dla pliku: after.csv wynosi:-0.052129734765772845
 # Modularity, dat: 2020-12-09 z interwałem: 200 without_friends dla pliku: before.csv wynosi:-0.05660595702255693
 # Modularity, dat: 2020-12-09 z interwałem: 200 without_friends dla pliku: after.csv wynosi:-0.06267561983471077
 # Modularity, dat: 2020-12-09 z interwałem: 200 with_friends dla pliku: before.csv wynosi:0.0001850091990816217
-# Modularity, dat: 2020-12-09 z interwałem: 200 with_friends dla pliku: after.csv wynosi:-0.018350971393228842
+# Modularity, dat: 2020-12-09 z interwałem: 200 with_friends dla pliku: after.csv wynosi:-0.018350971393228846

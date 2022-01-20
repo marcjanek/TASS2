@@ -1,14 +1,14 @@
 {
-      "praworz\u0105dno\u015b\u0107": 0.1722740222740223,
+      "praworz\u0105dno\u015b\u0107": 0.17227402227402225,
       "Sylwester Chruszcz": 0.24841269841269842,
       "kobieta": 0.308974358974359,
       "Adam Cyra\u0144ski": 0.33908730158730166,
       "Maria Siarkowska": 0.33908730158730166,
-      "polak": 0.35424020424020425,
-      "Joanna Augustynowska": 0.3543956043956043,
+      "polak": 0.3542402042402043,
+      "Joanna Augustynowska": 0.35439560439560436,
       "polski": 0.37755102040816324,
-      "Piotr Liroy-Marzec": 0.38085317460317464,
-      "trybuna\u0142": 0.38421578421578423,
+      "Piotr Liroy-Marzec": 0.3808531746031745,
+      "trybuna\u0142": 0.3842157842157842,
       "Ma\u0142gorzata Janowska": 0.38772893772893774,
       "unia": 0.40244279529993815,
       "Grzegorz Furgo": 0.4244505494505495,
@@ -16,9 +16,9 @@
       "konstytucja": 0.44395604395604404,
       "s\u0105d": 0.4501831501831502,
       "Zbigniew Gryglas": 0.4609126984126984,
-      "Marta Golbik": 0.4820512820512821,
+      "Marta Golbik": 0.48205128205128206,
       "Jaros\u0142aw Porwich": 0.5131868131868131,
-      "Micha\u0142 Stasi\u0144ski": 0.5507326007326007,
       "Adam Andruszkiewicz": 0.5507326007326008,
-      "\u0141ukasz Rzepecki": 0.5507326007326008
+      "\u0141ukasz Rzepecki": 0.5507326007326008,
+      "Micha\u0142 Stasi\u0144ski": 0.5507326007326008
 }
